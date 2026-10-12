@@ -1,0 +1,29 @@
+# 依赖与构建产物
+node_modules/
+dist/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 环境变量与密钥（严禁提交）
+.env
+.env.local
+*.pem
+
+# 教材原件与生成的索引（体积大、有版权）
+backend/data/textbooks/*
+!backend/data/textbooks/.gitkeep
+backend/data/index.json
+backend/data/chroma/
+
+# 本地工具与日志
+.tools/
+*.log
+npm-debug.log*
+
+# 编辑器 / 系统
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
