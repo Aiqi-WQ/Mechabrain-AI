@@ -1,0 +1,12 @@
+# 机小智 MechaBrain AI · 后端依赖
+# 安装：pip install -r requirements.txt
+
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.7.0
+pydantic-settings>=2.4.0
+httpx>=0.27.0
+python-multipart>=0.0.9
+
+# 可选：启用 Chroma 向量检索（不装则自动降级为内置 BM25）
+# pip install chromadb>=0.5
