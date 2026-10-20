@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: theme('colors.paper');
+  background-image:
+    linear-gradient(rgba(20, 32, 58, 0.052) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20, 32, 58, 0.052) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: -1px -1px;
+  color: theme('colors.ink');
+  font-family: theme('fontFamily.sans');
+  line-height: 1.7;
+}
+
+:focus-visible {
+  outline: 2px solid theme('colors.accent');
+  outline-offset: 2px;
+}
+
+/* Markdown 正文样式 */
+.md-body {
+  font-size: 14.5px;
+  line-height: 1.85;
+  word-break: break-word;
+}
+.md-body h1,
+.md-body h2,
+.md-body h3,
+.md-body h4 {
+  margin: 14px 0 6px;
+  font-weight: 700;
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+.md-body h1:first-child,
+.md-body h2:first-child,
+.md-body h3:first-child {
+  margin-top: 0;
+}
+.md-body p {
+  margin: 6px 0;
+  color: theme('colors.ink2');
+}
+.md-body ul,
+.md-body ol {
+  margin: 6px 0 10px;
+  padding-left: 18px;
+  color: theme('colors.ink2');
+}
+.md-body li {
+  margin: 3px 0;
+}
+.md-body strong {
+  color: theme('colors.ink');
+}
+.md-body code {
+  font-family: theme('fontFamily.mono');
+  font-size: 13px;
+  background: theme('colors.panel');
+  padding: 1px 5px;
+}
+.md-body blockquote {
+  margin: 8px 0;
+  padding: 6px 0 6px 10px;
+  border-left: 2px solid theme('colors.line');
+  color: theme('colors.ink3');
+  font-size: 13px;
+}
+.md-body pre {
+  background: theme('colors.panel');
+  padding: 10px;
+  overflow-x: auto;
+  font-size: 13px;
+}
