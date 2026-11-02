@@ -1,0 +1,3 @@
+# 把教材 PDF 放在这里（不会被提交到仓库）
+# 例如：机械原理.pdf、工程材料.pdf
+# 放好后运行：python scripts/ingest.py
