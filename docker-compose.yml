@@ -1,0 +1,12 @@
+services:
+  mechabrain:
+    build: .
+    container_name: mechabrain
+    ports:
+      - "8000:8000"
+    env_file:
+      - backend/.env
+    volumes:
+      # 教材与索引放在宿主机，重建镜像不丢
+      - ./backend/data:/app/backend/data
+    restart: unless-stopped

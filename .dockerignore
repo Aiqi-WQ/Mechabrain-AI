@@ -1,0 +1,13 @@
+node_modules
+dist
+.git
+.tools
+.venv
+venv
+__pycache__
+*.pyc
+.env
+backend/data/index.json
+backend/data/chroma
+backend/data/textbooks/*.pdf
+*.log
