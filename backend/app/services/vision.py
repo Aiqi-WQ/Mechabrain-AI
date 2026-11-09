@@ -1,4 +1,4 @@
-"""多模态图纸识读：qwen-vl-max（DashScope 兼容模式）。"""
+"""多模态图纸识读：qwen3-vl-plus（DashScope 兼容模式）。"""
 import base64
 import json
 

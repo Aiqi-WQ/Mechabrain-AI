@@ -32,7 +32,7 @@
 
 **前端**：Vue 3 · TypeScript · Vite 5 · Vue Router 4 · Pinia · TailwindCSS 3 · markdown-it
 **后端**：FastAPI · Uvicorn · pydantic-settings · httpx
-**AI**：DeepSeek-V4.1-Flash（对话）、qwen-vl-max（多模态识图 / OCR）、bge-m3（向量化，可选）
+**AI**：DeepSeek-V4.1-Flash（对话）、qwen3-vl-plus（多模态识图 / OCR）、bge-m3（向量化，可选）
 **检索**：Chroma（可选）＋ 内置 BM25（零依赖降级方案）
 **传输**：SSE（`fetch` + `ReadableStream` 手动解析，支持 POST body 与中断）
 
@@ -50,7 +50,7 @@
 │  CORS · 限流 30 次/分 · 输入过滤 · 统一 SSE 事件协议     │
 └───────┬───────────────┬───────────────┬──────────────┘
         │               │               │
-   DeepSeek API    qwen-vl-max     Retriever
+   DeepSeek API    qwen3-vl-plus     Retriever
    （讲题/问答）    （识图/OCR）    ┌──────┴──────┐
                                   Chroma      BM25
                                   （可选）    （默认）
@@ -135,7 +135,7 @@ cd ../backend && uvicorn app.main:app --host 0.0.0.0 --port 8000
 | `DEEPSEEK_API_KEY` | 是 | 讲题、教材问答、变式出题；申请：https://platform.deepseek.com/api_keys |
 | `DASHSCOPE_API_KEY` | 是 | 图纸识读与题目 OCR；申请：https://bailian.console.aliyun.com |
 | `DEEPSEEK_MODEL` | 否 | 默认 `deepseek-flash`（旧名 `deepseek-chat` 已下线） |
-| `VISION_MODEL` | 否 | 默认 `qwen-vl-max` |
+| `VISION_MODEL` | 否 | 默认 `qwen3-vl-plus` |
 | `CHROMA_ENABLED` | 否 | 默认 `false`，走内置 BM25 |
 | `EMBEDDING_BASE_URL` / `EMBEDDING_API_KEY` | 否 | 启用 Chroma 时填 bge-m3 的 OpenAI 兼容 `/embeddings` 地址 |
 | `CORS_ORIGINS` | 否 | 允许的前端来源，逗号分隔 |
@@ -224,7 +224,7 @@ git push -u origin main
 ## 已知限制
 
 - 教材切片只入库了两本教材的重点章节，检索质量取决于入库范围；未构建索引时教材问答会直接提示「知识库尚未构建」。
-- 图纸识读依赖 qwen-vl-max 的识别能力，手绘草图与低分辨率照片的置信度会下降，界面上会标出「低置信」。
+- 图纸识读依赖 qwen3-vl-plus 的识别能力，手绘草图与低分辨率照片的置信度会下降，界面上会标出「低置信」。
 - 学习记录存在浏览器 `localStorage`，换设备或换浏览器不同步。
 - 单机限流为内存滑动窗口，多副本部署时需要换成 Redis 之类的共享计数。
 

@@ -41,7 +41,7 @@ const pains = [
 const layers = [
   { idx: '01', title: '表现层', desc: '页面渲染、流式输出接收、上传交互。', tech: 'Vue3 · TypeScript · Vite · TailwindCSS' },
   { idx: '02', title: '接入层', desc: 'RESTful 接口，鉴权、上传与 SSE 转发。', tech: 'FastAPI · Uvicorn' },
-  { idx: '03', title: 'AI 能力层', desc: '大模型对话、多模态识图、RAG 检索、Agent 工作流。', tech: 'DeepSeek-V3 · qwen-vl-max · bge-m3' },
+  { idx: '03', title: 'AI 能力层', desc: '大模型对话、多模态识图、RAG 检索、Agent 工作流。', tech: 'DeepSeek-V4.1-Flash · qwen3-vl-plus · bge-m3' },
   { idx: '04', title: '数据层', desc: '教材切片向量化入库，学习记录留在浏览器本地。', tech: 'Chroma · localStorage' },
 ]
 </script>

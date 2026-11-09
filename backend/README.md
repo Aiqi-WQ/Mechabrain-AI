@@ -19,7 +19,7 @@ backend/
 │  │  └─ security.py     # 输入过滤、限流常量、拒答兜底文案
 │  └─ services/
 │     ├─ llm.py          # DeepSeek 流式调用
-│     ├─ vision.py       # qwen-vl-max 识读与 OCR
+│     ├─ vision.py       # qwen3-vl-plus 识读与 OCR
 │     ├─ retriever.py    # Chroma / 内置 BM25 双后端
 │     └─ prompts.py      # 四类任务的 system prompt
 ├─ scripts/ingest.py     # 教材 PDF → 章节 → 切片 → index.json
