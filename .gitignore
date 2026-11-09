@@ -14,6 +14,7 @@ venv/
 # 教材原件与生成的索引（体积大、有版权）
 backend/data/textbooks/*
 !backend/data/textbooks/.gitkeep
+!backend/data/textbooks/示例教材_机械原理节选.txt
 backend/data/index.json
 backend/data/chroma/
 

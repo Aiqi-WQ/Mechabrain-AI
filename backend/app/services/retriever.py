@@ -17,6 +17,14 @@ import httpx
 
 from ..config import get_settings
 
+BACKEND_ROOT = Path(__file__).resolve().parents[2]
+
+
+def resolve_data_path(raw: str) -> Path:
+    """配置里的相对路径按 backend/ 解析，这样从仓库根目录、backend/ 或容器里启动都指向同一份数据。"""
+    path = Path(raw)
+    return path if path.is_absolute() else BACKEND_ROOT / path
+
 
 def tokenize(text: str) -> list[str]:
     """中文按二元切分，英文与数字按词切分，够用且不依赖分词库。"""
@@ -90,7 +98,7 @@ class ChromaIndex:
         import chromadb  # 延迟导入，未安装时由上层降级
 
         settings = get_settings()
-        self.client = chromadb.PersistentClient(path=settings.chroma_dir)
+        self.client = chromadb.PersistentClient(path=str(resolve_data_path(settings.chroma_dir)))
         self.collection = self.client.get_or_create_collection("textbook_chunks")
 
     def search(self, query: str, top_k: int = 5, book: str | None = None,
@@ -125,7 +133,7 @@ class ChromaIndex:
 
 
 def load_chunks() -> list[dict]:
-    path = Path(get_settings().index_file)
+    path = resolve_data_path(get_settings().index_file)
     if not path.exists():
         return []
     try:

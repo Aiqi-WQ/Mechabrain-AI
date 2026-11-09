@@ -161,6 +161,8 @@ python scripts/ingest.py                   # 产出 data/index.json
 python scripts/ingest.py --chroma          # 同时写入 Chroma（需另装 chromadb 并配 embedding）
 ```
 
+仓库里自带一份 `backend/data/textbooks/示例教材_机械原理节选.txt`，直接跑 `python scripts/ingest.py` 就能得到可检索的索引，用于验证链路是否通；换成真实教材 PDF 再跑一次即可替换。
+
 切片策略：按「第 X 章」标题切章 → 段落聚合成 500~800 字切片 → 相邻切片重叠 100 字。
 
 ## 接口
