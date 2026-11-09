@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     # 文本模型（DeepSeek，OpenAI 兼容协议）
     deepseek_api_key: str = ""
     deepseek_base_url: str = "https://api.deepseek.com"
-    deepseek_model: str = "deepseek-chat"
+    deepseek_model: str = "deepseek-flash"
     chat_temperature: float = 0.3
 
     # 多模态模型（通义 qwen-vl-max，DashScope 兼容模式）

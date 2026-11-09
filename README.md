@@ -32,7 +32,7 @@
 
 **前端**：Vue 3 · TypeScript · Vite 5 · Vue Router 4 · Pinia · TailwindCSS 3 · markdown-it
 **后端**：FastAPI · Uvicorn · pydantic-settings · httpx
-**AI**：DeepSeek-V3（对话）、qwen-vl-max（多模态识图 / OCR）、bge-m3（向量化，可选）
+**AI**：DeepSeek-V4.1-Flash（对话）、qwen-vl-max（多模态识图 / OCR）、bge-m3（向量化，可选）
 **检索**：Chroma（可选）＋ 内置 BM25（零依赖降级方案）
 **传输**：SSE（`fetch` + `ReadableStream` 手动解析，支持 POST body 与中断）
 
@@ -134,7 +134,7 @@ cd ../backend && uvicorn app.main:app --host 0.0.0.0 --port 8000
 | --- | --- | --- |
 | `DEEPSEEK_API_KEY` | 是 | 讲题、教材问答、变式出题；申请：https://platform.deepseek.com/api_keys |
 | `DASHSCOPE_API_KEY` | 是 | 图纸识读与题目 OCR；申请：https://bailian.console.aliyun.com |
-| `DEEPSEEK_MODEL` | 否 | 默认 `deepseek-chat` |
+| `DEEPSEEK_MODEL` | 否 | 默认 `deepseek-flash`（旧名 `deepseek-chat` 已下线） |
 | `VISION_MODEL` | 否 | 默认 `qwen-vl-max` |
 | `CHROMA_ENABLED` | 否 | 默认 `false`，走内置 BM25 |
 | `EMBEDDING_BASE_URL` / `EMBEDDING_API_KEY` | 否 | 启用 Chroma 时填 bge-m3 的 OpenAI 兼容 `/embeddings` 地址 |
