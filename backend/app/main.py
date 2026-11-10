@@ -9,7 +9,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .api import chat, rag, vision
@@ -85,4 +85,14 @@ def meta():
 # 生产环境把前端构建产物挂到根路径（web/dist）
 dist = Path(__file__).resolve().parents[2] / "web" / "dist"
 if dist.exists():
-    app.mount("/", StaticFiles(directory=str(dist), html=True), name="web")
+    if (dist / "assets").is_dir():
+        app.mount("/assets", StaticFiles(directory=str(dist / "assets")), name="assets")
+
+    @app.get("/{full_path:path}")
+    def serve_spa(full_path: str):
+        """前端是 history 路由，深链接（/drawing 等）要回退到 index.html。"""
+        if full_path:
+            candidate = (dist / full_path).resolve()
+            if candidate.is_relative_to(dist) and candidate.is_file():
+                return FileResponse(candidate)
+        return FileResponse(dist / "index.html")
