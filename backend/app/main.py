@@ -33,12 +33,22 @@ app.add_middleware(
 )
 
 _hits: dict[str, deque] = defaultdict(deque)
+_request_count = 0
+
+
+def client_ip(request: Request) -> str:
+    """反向代理后 request.client.host 是代理 IP，优先取 X-Forwarded-For 第一个。"""
+    forwarded = request.headers.get("x-forwarded-for", "")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
 
 
 @app.middleware("http")
 async def rate_limit(request: Request, call_next):
+    global _request_count
     if request.url.path.startswith("/api/"):
-        ip = request.client.host if request.client else "unknown"
+        ip = client_ip(request)
         now = time.time()
         bucket = _hits[ip]
         while bucket and now - bucket[0] > 60:
@@ -46,6 +56,10 @@ async def rate_limit(request: Request, call_next):
         if len(bucket) >= settings.rate_limit_per_min:
             return JSONResponse({"detail": "请求过于频繁，请稍后再试"}, status_code=429)
         bucket.append(now)
+        _request_count += 1
+        if _request_count % 500 == 0:
+            for key in [k for k, v in _hits.items() if not v]:
+                _hits.pop(key, None)
     return await call_next(request)
 
 
@@ -82,6 +96,12 @@ def meta():
     }
 
 
+@app.get("/api/textbooks")
+def textbooks():
+    """返回实际入库的教材目录，前端章节树据此渲染，不再硬编码。"""
+    return {"backend": retriever.backend_name(), "books": retriever.catalog()}
+
+
 # 生产环境把前端构建产物挂到根路径（web/dist）
 dist = Path(__file__).resolve().parents[2] / "web" / "dist"
 if dist.exists():
@@ -90,7 +110,9 @@ if dist.exists():
 
     @app.get("/{full_path:path}")
     def serve_spa(full_path: str):
-        """前端是 history 路由，深链接（/drawing 等）要回退到 index.html。"""
+        """前端是 history 路由，深链接（/drawing 等）要回退到 index.html；API 路径不回退。"""
+        if full_path.startswith("api/"):
+            return JSONResponse({"detail": "接口不存在"}, status_code=404)
         if full_path:
             candidate = (dist / full_path).resolve()
             if candidate.is_relative_to(dist) and candidate.is_file():

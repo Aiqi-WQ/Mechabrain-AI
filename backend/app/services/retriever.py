@@ -26,6 +26,35 @@ def resolve_data_path(raw: str) -> Path:
     return path if path.is_absolute() else BACKEND_ROOT / path
 
 
+CHAPTER_NO_RE = re.compile(r"第\s*[一二三四五六七八九十百0-9]+\s*[章节篇]")
+
+
+def chapter_no(text: str) -> str:
+    """从「第1章 平面机构的自由度」里抽出「第1章」，两边都归一化后再比较。"""
+    match = CHAPTER_NO_RE.search(text or "")
+    return re.sub(r"\s+", "", match.group(0)) if match else ""
+
+
+def normalize_book(name: str) -> str:
+    return re.sub(r"\s+", "", name or "")
+
+
+def match_book(meta_book: str, wanted: str) -> bool:
+    """书名允许精确相等，也允许一方包含另一方（示例教材_机械原理节选 含 机械原理）。"""
+    a, b = normalize_book(meta_book), normalize_book(wanted)
+    return a == b or a in b or b in a
+
+
+def match_chapter(meta_chapter: str, wanted: str) -> bool:
+    """章节按编号比对：'第1章' 与 '第1章 平面机构的自由度' 视为同一章。"""
+    wanted_no = chapter_no(wanted) or re.sub(r"\s+", "", wanted or "")
+    meta_no = chapter_no(meta_chapter)
+    if wanted_no and meta_no:
+        return wanted_no == meta_no
+    a, b = re.sub(r"\s+", "", meta_chapter or ""), re.sub(r"\s+", "", wanted or "")
+    return a == b or a.startswith(b)
+
+
 def tokenize(text: str) -> list[str]:
     """中文按二元切分，英文与数字按词切分，够用且不依赖分词库。"""
     cleaned = re.sub(r"[^\w\u4e00-\u9fff]+", " ", text or "")
@@ -58,9 +87,9 @@ class LexicalIndex:
         scored: list[tuple[float, int]] = []
         for idx, tf in enumerate(self.tf):
             meta = self.chunks[idx]
-            if book and meta.get("book") != book:
+            if book and not match_book(meta.get("book", ""), book):
                 continue
-            if chapter and meta.get("chapter") != chapter:
+            if chapter and not match_chapter(meta.get("chapter", ""), chapter):
                 continue
             dl = len(self.docs[idx]) or 1
             score = 0.0
@@ -157,13 +186,89 @@ def get_index():
     return "lexical", LexicalIndex(chunks)
 
 
+def catalog() -> list[dict]:
+    """返回实际入库的教材目录：[{book, chapters:[{no, title, pages, chunks}]}]。
+
+    前端据此渲染章节树，保证「界面上能点的」与「后端能检索到的」完全一致。
+    """
+    books: dict[str, dict] = {}
+    for chunk in load_chunks():
+        book = chunk.get("book", "") or "未命名教材"
+        chapter_title = chunk.get("chapter", "") or "全文"
+        entry = books.setdefault(book, {"book": book, "chapters": {}})
+        item = entry["chapters"].setdefault(
+            chapter_title,
+            {
+                "no": chunk.get("chapter_no") or chapter_no(chapter_title),
+                "title": chapter_title,
+                "page_from": None,
+                "page_to": None,
+                "chunks": 0,
+            },
+        )
+        item["chunks"] += 1
+        page = chunk.get("page") or ""
+        if page.startswith("p.") and page[2:].isdigit():
+            number = int(page[2:])
+            item["page_from"] = number if item["page_from"] is None else min(item["page_from"], number)
+            item["page_to"] = number if item["page_to"] is None else max(item["page_to"], number)
+
+    out: list[dict] = []
+    for entry in books.values():
+        chapters = []
+        for item in entry["chapters"].values():
+            pages = ""
+            if item["page_from"] and item["page_to"]:
+                pages = f"p.{item['page_from']}–{item['page_to']}" if item["page_from"] != item["page_to"] \
+                    else f"p.{item['page_from']}"
+            chapters.append({
+                "no": item["no"],
+                "title": item["title"],
+                "pages": pages,
+                "chunks": item["chunks"],
+            })
+        out.append({"book": entry["book"], "chapters": chapters})
+    return out
+
+
+def resolve_scope(book: str | None, chapter: str | None) -> tuple[str | None, str | None]:
+    """把前端传来的 {book, chapter} 解析成索引里真实的书名与章标题，供 Chroma 元数据过滤。"""
+    if not book and not chapter:
+        return None, None
+    resolved_book, resolved_chapter = book, chapter
+    for entry in catalog():
+        if book and match_book(entry["book"], book):
+            resolved_book = entry["book"]
+            for item in entry["chapters"]:
+                if chapter and match_chapter(item["title"], chapter):
+                    resolved_chapter = item["title"]
+                    break
+            if book:
+                break
+    return resolved_book, resolved_chapter
+
+
+def dedupe_cites(hits: list[dict]) -> list[dict]:
+    """同一章节的多个切片只留一条引用，避免 UI 里出现重复标签。"""
+    seen: set[tuple[str, str, str]] = set()
+    out: list[dict] = []
+    for hit in hits:
+        key = (hit.get("book", ""), hit.get("chapter", ""), hit.get("page", ""))
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append({"book": hit.get("book", ""), "chapter": hit.get("chapter", ""), "page": hit.get("page", "")})
+    return out
+
+
 def retrieve(query: str, top_k: int | None = None, book: str | None = None,
              chapter: str | None = None) -> list[dict]:
     settings = get_settings()
     backend, index = get_index()
     if not index:
         return []
-    return index.search(query, top_k or settings.retrieve_top_k, book, chapter)
+    scope_book, scope_chapter = resolve_scope(book, chapter)
+    return index.search(query, top_k or settings.retrieve_top_k, scope_book, scope_chapter)
 
 
 def backend_name() -> str:

@@ -42,7 +42,7 @@ class Settings(BaseSettings):
     # 服务
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     max_upload_mb: int = 10
-    rate_limit_per_min: int = 30
+    rate_limit_per_min: int = 60
 
     @property
     def cors_origin_list(self) -> list[str]:

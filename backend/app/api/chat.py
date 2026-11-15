@@ -33,6 +33,7 @@ async def chat(req: ChatRequest):
     system = SYSTEM_BY_MODE[req.mode]
     messages: list[dict] = [{"role": "system", "content": system}]
 
+    hits: list[dict] = []
     if req.mode == "rag":
         hits = retriever.retrieve(question)
         if hits:
@@ -48,11 +49,14 @@ async def chat(req: ChatRequest):
         messages.append({"role": m.role, "content": m.content})
 
     message_id = uuid.uuid4().hex[:12]
+    cites = retriever.dedupe_cites(hits)
 
     async def gen():
         try:
             async for piece in stream_chat(messages):
                 yield delta(piece)
+            if cites:
+                yield pack({"type": "cites", "items": cites, "backend": retriever.backend_name()})
             yield done(message_id)
         except ModelNotConfigured as exc:
             yield error(str(exc), "model_not_configured")

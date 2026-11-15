@@ -44,10 +44,7 @@ async def rag(req: RagRequest):
         {"role": "system", "content": "【资料】\n" + retriever.format_context(hits)},
         {"role": "user", "content": question},
     ]
-    cites = [
-        {"book": h.get("book", ""), "chapter": h.get("chapter", ""), "page": h.get("page", "")}
-        for h in hits
-    ]
+    cites = retriever.dedupe_cites(hits)
 
     async def gen():
         try:
