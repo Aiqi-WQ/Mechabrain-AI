@@ -28,6 +28,25 @@ body {
   outline-offset: 2px;
 }
 
+/* 透明 file input 聚焦时，让外层 label 有可见反馈（键盘用户能看到焦点在哪） */
+.upload-drop:has(input:focus-visible) {
+  border-color: theme('colors.accent');
+  box-shadow: 0 0 0 2px rgba(168, 53, 32, 0.35);
+  border-style: solid;
+}
+
+/* 尊重系统的「减少动效」设置 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* Markdown 正文样式 */
 .md-body {
   font-size: 14.5px;

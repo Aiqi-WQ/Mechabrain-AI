@@ -125,18 +125,18 @@ function timeOf(ts: number) {
               <div class="md-body" v-html="renderMarkdown(item.answer)" />
               <div v-if="item.cites.length" class="mt-2 flex flex-wrap gap-1.5">
                 <span
-                  v-for="cite in item.cites"
-                  :key="cite.book + cite.chapter"
-                  class="border border-line bg-paper2 px-2 py-0.5 font-mono text-[10px] text-ink2"
+                  v-for="(cite, idx) in item.cites"
+                  :key="cite.book + cite.chapter + cite.page + idx"
+                  class="border border-line bg-paper2 px-2 py-0.5 font-mono text-[11px] text-ink2"
                 >
-                  {{ cite.book }}·{{ cite.chapter }}·{{ cite.page }}
+                  {{ cite.book }}·{{ cite.chapter }}<template v-if="cite.page">·{{ cite.page }}</template>
                 </span>
               </div>
             </div>
           </article>
         </div>
       </section>
-      <p class="border-t border-dashed border-linesoft pt-2.5 text-[11px] text-ink3">
+      <p class="border-t border-dashed border-linesoft pt-2.5 text-[12.5px] text-ink2">
         以上内容由 AI 生成，仅供学习参考，请以教材与老师讲解为准。
       </p>
     </div>

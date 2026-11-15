@@ -10,11 +10,55 @@
     />
     <link
       rel="icon"
-      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%2314203a'/><g fill='none' stroke='%23ecedea' stroke-width='1.6'><circle cx='16' cy='16' r='9.5'/><circle cx='16' cy='16' r='4.2'/></g><circle cx='16' cy='16' r='1.5' fill='%23c2402a'/></svg>"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%2314203a'/><g fill='none' stroke='%23ecedea' stroke-width='1.6'><circle cx='16' cy='16' r='9.5'/><circle cx='16' cy='16' r='4.2'/></g><circle cx='16' cy='16' r='1.5' fill='%23a83520'/></svg>"
     />
+    <!-- 临界 CSS：首屏先出底色与方格纸，避免 JS 加载前那一瞬白屏 -->
+    <style>
+      html {
+        background-color: #ecedea;
+      }
+      body {
+        margin: 0;
+        background-color: #ecedea;
+        background-image:
+          linear-gradient(rgba(20, 32, 58, 0.052) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(20, 32, 58, 0.052) 1px, transparent 1px);
+        background-size: 24px 24px;
+        background-position: -1px -1px;
+        color: #14203a;
+        font-family: "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", system-ui, sans-serif;
+        line-height: 1.7;
+      }
+      #app-loading {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 88px 16px;
+        font-family: Consolas, monospace;
+        font-size: 13px;
+        color: #4c5872;
+        letter-spacing: 0.1em;
+      }
+      #app-loading::after {
+        content: "";
+        display: block;
+        width: 120px;
+        height: 2px;
+        margin-top: 14px;
+        background: #a83520;
+      }
+    </style>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app"><div id="app-loading">MECHABRAIN · 正在加载界面…</div></div>
+    <noscript>
+      <div style="max-width: 720px; margin: 0 auto; padding: 48px 16px; font-family: sans-serif">
+        <h1 style="font-size: 20px">机小智 MechaBrain AI</h1>
+        <p style="line-height: 1.8">
+          本应用是 Vue 3 + FastAPI 的单页应用，需要启用 JavaScript 才能使用。请在浏览器设置中开启
+          JavaScript 后刷新本页。
+        </p>
+      </div>
+    </noscript>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

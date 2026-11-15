@@ -9,10 +9,10 @@ export default {
         paper2: '#e6e8e3',
         ink: '#14203a',
         ink2: '#4c5872',
-        ink3: '#848da0',
+        ink3: '#6b7385',
         line: '#b0b7b1',
         linesoft: '#ccd1cb',
-        accent: '#c2402a',
+        accent: '#a83520',
         blueprint: '#2a5c8a',
       },
       fontFamily: {

@@ -1,49 +1,11 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
-import { ragStream, type SseEvent } from '../api'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { fetchTextbooks, ragStream, type SseEvent, type TextbookBook } from '../api'
 import { renderMarkdown } from '../lib/markdown'
 import { useAppStore, useRecordsStore } from '../stores/app'
 
-interface Chapter {
-  no: string
-  title: string
-  page: string
-}
-
-interface Book {
-  name: string
-  meta: string
-  chapters: Chapter[]
-}
-
-const books: Book[] = [
-  {
-    name: '机械原理',
-    meta: '孙桓 等 · 已入库',
-    chapters: [
-      { no: '第1章', title: '绪论', page: 'p.1–12' },
-      { no: '第2章', title: '平面机构的运动简图及自由度', page: 'p.13–38' },
-      { no: '第3章', title: '平面连杆机构', page: 'p.39–66' },
-      { no: '第4章', title: '凸轮机构', page: 'p.67–92' },
-      { no: '第5章', title: '齿轮机构', page: 'p.93–128' },
-      { no: '第6章', title: '轮系', page: 'p.129–152' },
-      { no: '第7章', title: '间歇运动机构', page: 'p.153–166' },
-      { no: '第8章', title: '机械运转与调速', page: 'p.167–186' },
-    ],
-  },
-  {
-    name: '工程材料',
-    meta: '重点章节 · 已入库',
-    chapters: [
-      { no: '第1章', title: '金属材料的力学性能', page: 'p.1–20' },
-      { no: '第2章', title: '金属的晶体结构与结晶', page: 'p.21–44' },
-      { no: '第3章', title: '合金的相结构与相图基础', page: 'p.45–68' },
-      { no: '第4章', title: '铁碳合金相图', page: 'p.69–96' },
-      { no: '第5章', title: '钢的热处理', page: 'p.97–124' },
-      { no: '第6章', title: '合金钢与铸铁', page: 'p.125–150' },
-    ],
-  },
-]
+const books = ref<TextbookBook[]>([])
+const catalogReady = ref(false)
 
 const app = useAppStore()
 const records = useRecordsStore()
@@ -59,11 +21,37 @@ const errorMsg = ref('')
 const controller = ref<AbortController | null>(null)
 const logEl = ref<HTMLElement | null>(null)
 
+const totalChapters = computed(() =>
+  books.value.reduce((sum, book) => sum + book.chapters.length, 0),
+)
+
 const scopeLabel = computed(() =>
   scope.value ? `${scope.value.book} · ${scope.value.chapter}` : '全部章节 · Top-5 切片',
 )
 
+const strategy = computed(() =>
+  backend.value === 'chroma'
+    ? '检索策略：章节元数据过滤 → 向量语义召回 Top-5'
+    : '检索策略：章节元数据过滤 → BM25 词法检索 Top-5',
+)
+
 const rendered = computed(() => renderMarkdown(answer.value))
+
+function chapterName(no: string, title: string): string {
+  if (no && title.startsWith(no)) return title.slice(no.length).trim() || title
+  return title
+}
+
+async function loadCatalog() {
+  try {
+    const data = await fetchTextbooks()
+    books.value = data.books
+  } catch {
+    books.value = []
+  } finally {
+    catalogReady.value = true
+  }
+}
 
 function pick(book: string, chapter: string) {
   if (scope.value && scope.value.book === book && scope.value.chapter === chapter) {
@@ -74,6 +62,8 @@ function pick(book: string, chapter: string) {
     app.notify(`检索范围限定为：${book} ${chapter}`)
   }
 }
+
+onMounted(loadCatalog)
 
 async function ask(text?: string) {
   const content = (text ?? question.value).trim()
@@ -123,33 +113,41 @@ onBeforeUnmount(() => controller.value?.abort())
       <div class="font-mono text-[10px] tracking-wide text-accent">FIG. 06　教材知识库</div>
       <h2 class="mt-1.5 text-[clamp(22px,5vw,32px)] font-bold">教材问答</h2>
       <p class="mt-2 max-w-[44em] text-[13.5px] leading-relaxed text-ink2">
-        先选章节限定范围，再提问。答案由检索到的教材切片生成，末尾回标教材、章节与页码；资料里没有的内容会直说「没有」，不编造。
+        左侧章节树来自实际入库的教材。答案由检索到的教材切片生成，末尾回标教材与章节（PDF 教材带页码）；资料里没有的内容会直说「没有」，不编造。
       </p>
     </div>
 
     <div class="grid gap-3 lg:grid-cols-[280px_1fr] lg:gap-0 lg:border lg:border-linesoft">
       <aside class="border border-linesoft bg-paper2 p-3.5 lg:border-0 lg:border-r">
-        <div class="mb-2 font-mono text-[9.5px] tracking-widest text-ink2">教材目录</div>
-        <div v-for="book in books" :key="book.name" class="mb-3.5">
+        <div class="mb-2 flex items-baseline justify-between gap-2">
+          <span class="font-mono text-[10px] tracking-widest text-ink2">教材目录</span>
+          <span class="font-mono text-[10px] text-ink2">{{ books.length }} 本 / {{ totalChapters }} 章</span>
+        </div>
+        <p v-if="!catalogReady" class="text-[12.5px] text-ink2">正在读取已入库教材…</p>
+        <p v-else-if="!books.length" class="border border-dashed border-line bg-paper p-2.5 text-[12.5px] leading-relaxed text-ink2">
+          知识库还没有教材。把 PDF / TXT 放进 <code class="font-mono">backend/data/textbooks/</code>，
+          运行 <code class="font-mono">python scripts/ingest.py</code> 后刷新本页。
+        </p>
+        <div v-for="book in books" :key="book.book" class="mb-3.5">
           <div class="mb-1.5 flex items-baseline justify-between gap-2 border-b border-line pb-1.5">
-            <b class="text-[14px]">{{ book.name }}</b>
-            <span class="font-mono text-[9.5px] text-ink3">{{ book.meta }}</span>
+            <b class="text-[14px]">{{ book.book }}</b>
+            <span class="font-mono text-[10px] text-ink2">{{ book.chapters.length }} 章</span>
           </div>
           <button
             v-for="chapter in book.chapters"
-            :key="chapter.no"
+            :key="chapter.title"
             type="button"
             class="flex min-h-[38px] w-full items-baseline gap-1.5 border-l-2 border-transparent bg-transparent px-2 py-1.5 text-left text-[12.5px] leading-[1.5] text-ink2 transition-colors hover:bg-paper hover:text-ink"
             :class="
-              scope?.book === book.name && scope?.chapter === chapter.no
+              scope?.book === book.book && scope?.chapter === (chapter.no || chapter.title)
                 ? 'border-accent bg-paper text-ink'
                 : ''
             "
-            :aria-pressed="scope?.book === book.name && scope?.chapter === chapter.no"
-            @click="pick(book.name, chapter.no)"
+            :aria-pressed="scope?.book === book.book && scope?.chapter === (chapter.no || chapter.title)"
+            @click="pick(book.book, chapter.no || chapter.title)"
           >
-            <span>{{ chapter.no }}　{{ chapter.title }}</span>
-            <span class="ml-auto shrink-0 font-mono text-[9px] text-ink3">{{ chapter.page }}</span>
+            <span>{{ chapterName(chapter.no, chapter.title) }}</span>
+            <span class="ml-auto shrink-0 font-mono text-[10px] text-ink2">{{ chapter.pages || chapter.chunks + ' 片' }}</span>
           </button>
         </div>
         <button
@@ -168,7 +166,14 @@ onBeforeUnmount(() => controller.value?.abort())
           <span v-if="backend" class="ml-auto font-mono text-[10px] text-ink3">backend: {{ backend }}</span>
         </div>
 
-        <div ref="logEl" class="flex max-h-[52vh] min-h-[280px] flex-col gap-4 overflow-y-auto py-4">
+        <div
+          ref="logEl"
+          role="log"
+          aria-live="polite"
+          aria-relevant="additions"
+          aria-label="教材问答内容"
+          class="flex min-h-[280px] flex-col gap-4 overflow-y-auto py-4 lg:max-h-[52vh]"
+        >
           <div v-if="!asked" class="border border-dashed border-line bg-paper2 p-4">
             <h4 class="text-[15px] font-bold">从教材里找答案</h4>
             <p class="mt-1.5 text-[13px] leading-[1.8] text-ink2">
@@ -194,15 +199,15 @@ onBeforeUnmount(() => controller.value?.abort())
               <div class="md-body" v-html="rendered || '正在检索教材切片…'" />
               <div v-if="cites.length" class="mt-2 flex flex-wrap gap-1.5">
                 <span
-                  v-for="cite in cites"
-                  :key="cite.book + cite.chapter"
-                  class="border border-line bg-paper2 px-2 py-0.5 font-mono text-[10.5px] text-ink2"
+                  v-for="(cite, idx) in cites"
+                  :key="cite.book + cite.chapter + cite.page + idx"
+                  class="border border-line bg-paper2 px-2 py-0.5 font-mono text-[11px] text-ink2"
                 >
-                  {{ cite.book }}·{{ cite.chapter }}·{{ cite.page }}
+                  {{ cite.book }}·{{ cite.chapter }}<template v-if="cite.page">·{{ cite.page }}</template>
                 </span>
               </div>
-              <p v-if="errorMsg" class="mt-2 border-l-2 border-accent pl-2 text-[12.5px] text-accent">{{ errorMsg }}</p>
-              <p class="mt-3 border-t border-dashed border-linesoft pt-2 text-[10.5px] leading-relaxed text-ink3">
+              <p v-if="errorMsg" class="mt-2 border-l-2 border-accent pl-2 text-[13px] text-accent">{{ errorMsg }}</p>
+              <p class="mt-3 border-t border-dashed border-linesoft pt-2 text-[12.5px] leading-relaxed text-ink2">
                 以上内容由 AI 生成，仅供学习参考，请以教材与老师讲解为准。
               </p>
             </div>
@@ -226,8 +231,8 @@ onBeforeUnmount(() => controller.value?.abort())
             {{ busy ? '生成中…' : '提问' }}
           </button>
         </form>
-        <div class="mt-2 flex flex-wrap justify-between gap-2 font-mono text-[10px] text-ink3">
-          <span>检索策略：章节元数据过滤 → 语义召回 Top-5</span>
+        <div class="mt-2 flex flex-wrap justify-between gap-2 font-mono text-[11px] text-ink2">
+          <span>{{ strategy }}</span>
           <span>{{ records.items.filter((i) => i.mode === 'rag').length }} 条已存入记录</span>
         </div>
       </div>

@@ -8,7 +8,7 @@ const router = createRouter({
     { path: '/rag', name: 'rag', component: () => import('./views/RagView.vue') },
     { path: '/chat', name: 'chat', component: () => import('./views/ChatView.vue') },
     { path: '/records', name: 'records', component: () => import('./views/RecordsView.vue') },
-    { path: '/:pathMatch(.*)*', redirect: '/' },
+    { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('./views/NotFoundView.vue') },
   ],
   scrollBehavior() {
     return { top: 0 }
@@ -22,6 +22,7 @@ router.afterEach((to) => {
     rag: '教材问答 · 机小智',
     chat: 'AI 讲题 · 机小智',
     records: '我的记录 · 机小智',
+    'not-found': '页面未找到 · 机小智',
   }
   document.title = titles[String(to.name)] || '机小智 MechaBrain AI'
 })

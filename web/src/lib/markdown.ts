@@ -9,10 +9,3 @@ const md = new MarkdownIt({
 export function renderMarkdown(source: string): string {
   return md.render(source || '')
 }
-
-export function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-}

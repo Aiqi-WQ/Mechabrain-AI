@@ -22,6 +22,10 @@ const notes = ref('')
 const errorMsg = ref('')
 const dragging = ref(false)
 const controller = ref<AbortController | null>(null)
+const elapsed = ref(0)
+let timer: ReturnType<typeof setInterval> | undefined
+
+const dimTitles = ['视图结构', '尺寸与公差', '表面粗糙度', '材料推断', '加工工艺建议']
 
 const sizeLabel = computed(() => {
   if (!file.value) return ''
@@ -77,6 +81,11 @@ async function run() {
   dims.value = []
   notes.value = ''
   errorMsg.value = ''
+  elapsed.value = 0
+  clearInterval(timer)
+  timer = setInterval(() => {
+    elapsed.value += 1
+  }, 1000)
   controller.value = new AbortController()
   try {
     await visionStream(
@@ -103,6 +112,8 @@ async function run() {
   } finally {
     busy.value = false
     controller.value = null
+    clearInterval(timer)
+    timer = undefined
   }
 }
 
@@ -114,6 +125,7 @@ function askMore() {
 onBeforeUnmount(() => {
   if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
   controller.value?.abort()
+  clearInterval(timer)
 })
 </script>
 
@@ -130,18 +142,19 @@ onBeforeUnmount(() => {
 
     <div class="grid gap-3">
       <label
-        class="relative block cursor-pointer border border-dashed bg-paper2 px-4 py-7 text-center transition-colors"
+        class="upload-drop relative block cursor-pointer border border-dashed bg-paper2 px-4 py-7 text-center transition-colors"
         :class="dragging ? 'border-accent bg-[#e9e6e2]' : 'border-line hover:border-accent'"
         @dragover.prevent="dragging = true"
         @dragleave.prevent="dragging = false"
         @drop.prevent="onDrop"
       >
-        <div class="font-mono text-[9.5px] tracking-widest text-accent">UPLOAD · IMAGE</div>
+        <div class="font-mono text-[10px] tracking-widest text-accent">UPLOAD · IMAGE</div>
         <h4 class="mt-2 text-[16px] font-bold">拖一张零件图到这里，或点击选择文件</h4>
         <p class="mt-1.5 text-[12.5px] text-ink2">零件图、装配图、课本习题截图都可以 · JPG / PNG / WEBP · ≤ 10MB</p>
         <input
           type="file"
           accept="image/jpeg,image/png,image/webp"
+          aria-label="选择要识读的图纸图片"
           class="absolute inset-0 h-full w-full cursor-pointer opacity-0"
           @change="onChange"
         />
@@ -186,6 +199,34 @@ onBeforeUnmount(() => {
         {{ errorMsg }}
       </p>
 
+      <div
+        v-if="busy && !dims.length"
+        class="grid gap-px border border-linesoft bg-linesoft md:grid-cols-2"
+        role="status"
+        aria-live="polite"
+      >
+        <div class="bg-paper p-4 md:col-span-2">
+          <div class="font-mono text-[10px] tracking-widest text-accent">识别中 · 已用 {{ elapsed }} 秒</div>
+          <p class="mt-1.5 text-[13px] leading-relaxed text-ink2">
+            正在把图纸发给多模态模型识读，通常需要 20–40 秒，最长不超过 3 分钟。这期间请保持页面打开。
+          </p>
+        </div>
+        <div
+          v-for="title in dimTitles"
+          :key="title"
+          class="bg-paper p-4"
+          :class="title === dimTitles[0] ? 'md:col-span-2' : ''"
+        >
+          <div class="font-mono text-[10px] tracking-widest text-ink2">待识读</div>
+          <h4 class="mt-1.5 text-[16px] font-bold">{{ title }}</h4>
+          <div class="mt-3 space-y-2" aria-hidden="true">
+            <div class="h-3 w-11/12 animate-pulse bg-panel" />
+            <div class="h-3 w-9/12 animate-pulse bg-panel" />
+            <div class="h-3 w-7/12 animate-pulse bg-panel" />
+          </div>
+        </div>
+      </div>
+
       <div v-if="dims.length" class="grid gap-px border border-linesoft bg-linesoft md:grid-cols-2">
         <article
           v-for="(dim, index) in dims"
@@ -206,7 +247,7 @@ onBeforeUnmount(() => {
         </article>
       </div>
 
-      <p class="border-t border-dashed border-linesoft pt-2.5 text-[11.5px] leading-relaxed text-ink3">
+      <p class="border-t border-dashed border-linesoft pt-2.5 text-[12.5px] leading-relaxed text-ink2">
         以上内容由 AI 生成，仅供学习参考，请以教材与老师讲解为准。
       </p>
     </div>

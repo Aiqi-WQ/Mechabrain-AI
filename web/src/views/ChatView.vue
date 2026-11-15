@@ -104,6 +104,7 @@ async function send(text?: string) {
   controller.value = new AbortController()
   const index = messages.value.length - 1
   let acc = ''
+  let cites: Array<{ book: string; chapter: string; page: string }> = []
   scrollToEnd()
 
   try {
@@ -116,17 +117,19 @@ async function send(text?: string) {
           acc += event.text
           messages.value[index].content = acc
           scrollToEnd()
+        } else if (event.type === 'cites' && event.items) {
+          cites = event.items
         } else if (event.type === 'error') {
           errorMsg.value = event.message ?? '生成失败'
         }
       },
       controller.value.signal,
     )
-    if (acc.trim()) records.add(mode.value, content, acc, [])
+    if (acc.trim()) records.add(mode.value, content, acc, cites)
   } catch (error) {
     const message = error instanceof Error ? error.message : '生成失败'
     if (!/abort/i.test(message)) errorMsg.value = message
-    else if (acc.trim()) records.add(mode.value, content, `${acc}\n\n（已手动停止生成）`, [])
+    else if (acc.trim()) records.add(mode.value, content, `${acc}\n\n（已手动停止生成）`, cites)
   } finally {
     busy.value = false
     controller.value = null
@@ -199,7 +202,14 @@ onBeforeUnmount(() => controller.value?.abort())
       </aside>
 
       <div class="flex min-h-[58vh] min-w-0 flex-col bg-paper">
-        <div ref="logEl" class="flex flex-1 flex-col gap-4 overflow-y-auto px-3.5 py-4" style="max-height: 54vh">
+        <div
+          ref="logEl"
+          role="log"
+          aria-live="polite"
+          aria-relevant="additions"
+          aria-label="对话内容"
+          class="flex flex-1 flex-col gap-4 overflow-y-auto px-3.5 py-4 lg:max-h-[54vh]"
+        >
           <div v-if="!messages.length" class="border border-dashed border-line bg-paper2 p-4">
             <h4 class="text-[15px] font-bold">{{ current.label }}模式怎么用</h4>
             <p class="mt-1.5 text-[13px] leading-[1.8] text-ink2">{{ current.hint }}</p>
@@ -277,7 +287,7 @@ onBeforeUnmount(() => controller.value?.abort())
               发送
             </button>
           </form>
-          <p class="mt-2 text-[10.5px] leading-relaxed text-ink3">
+          <p class="mt-2 text-[12.5px] leading-relaxed text-ink2">
             Enter 发送，Shift + Enter 换行。以上内容由 AI 生成，仅供学习参考，请以教材与老师讲解为准。
           </p>
         </div>

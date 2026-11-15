@@ -27,6 +27,18 @@ export interface MetaInfo {
   disclaimer: string
 }
 
+export interface TextbookChapter {
+  no: string
+  title: string
+  pages: string
+  chunks: number
+}
+
+export interface TextbookBook {
+  book: string
+  chapters: TextbookChapter[]
+}
+
 async function parseSse(
   response: Response,
   onEvent: (event: SseEvent) => void,
@@ -138,4 +150,10 @@ export async function fetchMeta(): Promise<MetaInfo> {
   const response = await fetch('/api/meta')
   if (!response.ok) throw new Error('无法获取服务状态')
   return (await response.json()) as MetaInfo
+}
+
+export async function fetchTextbooks(): Promise<{ backend: string; books: TextbookBook[] }> {
+  const response = await fetch('/api/textbooks')
+  if (!response.ok) throw new Error('无法获取教材目录')
+  return (await response.json()) as { backend: string; books: TextbookBook[] }
 }

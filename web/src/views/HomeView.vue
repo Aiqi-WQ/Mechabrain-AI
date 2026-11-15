@@ -13,7 +13,7 @@ const entries = [
     path: '/rag',
     code: 'RAG 02',
     title: '教材问答',
-    desc: '基于《机械原理》《工程材料》章节切片检索，回答末尾标注教材出处与章节页码。',
+    desc: '基于已入库教材（示例《机械原理》）的章节切片检索，回答末尾标注教材出处与章节。',
     action: '去问教材',
   },
   {
@@ -42,7 +42,7 @@ const layers = [
   { idx: '01', title: '表现层', desc: '页面渲染、流式输出接收、上传交互。', tech: 'Vue3 · TypeScript · Vite · TailwindCSS' },
   { idx: '02', title: '接入层', desc: 'RESTful 接口，鉴权、上传与 SSE 转发。', tech: 'FastAPI · Uvicorn' },
   { idx: '03', title: 'AI 能力层', desc: '大模型对话、多模态识图、RAG 检索、Agent 工作流。', tech: 'DeepSeek-V4.1-Flash · qwen3-vl-plus · bge-m3' },
-  { idx: '04', title: '数据层', desc: '教材切片向量化入库，学习记录留在浏览器本地。', tech: 'Chroma · localStorage' },
+  { idx: '04', title: '数据层', desc: '教材切片建 BM25 词法索引（可选 Chroma 向量检索），学习记录留在浏览器本地。', tech: 'BM25 · Chroma（可选）· localStorage' },
 ]
 </script>
 
@@ -50,7 +50,7 @@ const layers = [
   <section class="border-t border-linesoft px-4 pb-8 pt-6 sm:px-8 lg:px-10 lg:py-11">
     <div class="grid gap-7 lg:grid-cols-[1.02fr_0.98fr] lg:gap-9">
       <div>
-        <div class="font-mono text-[10px] tracking-wide text-accent">FIG. 01　项目总览</div>
+        <div class="font-mono text-[10px] tracking-wide text-accent">SHEET 01　项目总览</div>
         <h1 class="mt-2 text-[clamp(44px,12vw,78px)] font-bold leading-[0.95] tracking-[-0.05em]">机小智</h1>
         <div class="mt-3 flex items-center gap-2 font-mono text-[11px] tracking-[0.2em] text-ink2">
           MECHABRAIN AI
@@ -58,7 +58,7 @@ const layers = [
         </div>
         <p class="mt-4 max-w-[33em] text-[15px] leading-[1.9] text-ink2">
           面向机械类专业学生的 AI 学习与工程图纸助手。上传一张零件图，它把<b class="text-ink">视图结构、尺寸公差、表面粗糙度</b>逐项讲清楚；
-          翻教材卡住时，它从《机械原理》《工程材料》找到出处再回答；题目不会做，它按
+          翻教材卡住时，它从已入库教材里找到出处再回答；题目不会做，它按
           <b class="text-ink">审题 → 考点 → 分步 → 易错</b>讲到你会。
         </p>
 
@@ -79,19 +79,19 @@ const layers = [
 
         <dl class="mt-6 grid grid-cols-2 gap-px border border-linesoft bg-linesoft sm:grid-cols-4">
           <div class="bg-paper px-3 py-2.5">
-            <dt class="font-mono text-[9px] tracking-wide text-ink2">PAGES</dt>
+            <dt class="font-mono text-[10px] tracking-wide text-ink2">PAGES</dt>
             <dd class="mt-0.5 text-[18px] font-bold leading-tight">5<span class="ml-1 text-[11px] font-normal text-ink2">页</span></dd>
           </div>
           <div class="bg-paper px-3 py-2.5">
-            <dt class="font-mono text-[9px] tracking-wide text-ink2">AI LAYERS</dt>
+            <dt class="font-mono text-[10px] tracking-wide text-ink2">AI LAYERS</dt>
             <dd class="mt-0.5 text-[18px] font-bold leading-tight">4<span class="ml-1 text-[11px] font-normal text-ink2">条链路</span></dd>
           </div>
           <div class="bg-paper px-3 py-2.5">
-            <dt class="font-mono text-[9px] tracking-wide text-ink2">TEXTBOOKS</dt>
-            <dd class="mt-0.5 text-[18px] font-bold leading-tight">2<span class="ml-1 text-[11px] font-normal text-ink2">本入库</span></dd>
+            <dt class="font-mono text-[10px] tracking-wide text-ink2">TEXTBOOKS</dt>
+            <dd class="mt-0.5 text-[18px] font-bold leading-tight">1<span class="ml-1 text-[11px] font-normal text-ink2">本入库</span></dd>
           </div>
           <div class="bg-paper px-3 py-2.5">
-            <dt class="font-mono text-[9px] tracking-wide text-ink2">STREAM</dt>
+            <dt class="font-mono text-[10px] tracking-wide text-ink2">STREAM</dt>
             <dd class="mt-0.5 text-[18px] font-bold leading-tight">SSE<span class="ml-1 text-[11px] font-normal text-ink2">逐字</span></dd>
           </div>
         </dl>
@@ -209,7 +209,8 @@ const layers = [
         <div class="mt-1.5 font-mono text-[10px] leading-relaxed text-ink2">传智杯 · 全国高校 AI Web 开发挑战赛</div>
       </div>
       <div class="font-mono text-[10px] leading-relaxed text-ink2">
-        作者　张照<br />
+        作者　张照 · 黄赤宇<br />
+        张照：产品与全栈实现　／　黄赤宇：运维与推广<br />
         绵阳城市学院 · 智能制造与工程学院<br />
         机械设计制造及其自动化 2025 级
       </div>
