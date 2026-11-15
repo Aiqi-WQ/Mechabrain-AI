@@ -88,8 +88,12 @@ async def recognize_text(image_bytes: bytes, mime: str, prompt: str) -> str:
     return str(content).strip()
 
 
+DIMS = ("view", "size", "roughness", "material", "process")
+CONFIDENCE_LEVELS = {"high", "medium", "low"}
+
+
 def normalize(raw: str) -> VisionResult:
-    """模型偶尔会带 ```json 包裹，这里做容错解析。"""
+    """模型偶尔会带 ```json 包裹，这里做容错解析；每个维度单独取 content 与 confidence。"""
     text = raw.strip()
     if text.startswith("```"):
         text = text.split("```")[1]
@@ -102,15 +106,28 @@ def normalize(raw: str) -> VisionResult:
             data = json.loads(text[start : end + 1])
         except json.JSONDecodeError:
             data = {}
+    fallback = str(data.get("confidence", "medium")).strip().lower()
+    if fallback not in CONFIDENCE_LEVELS:
+        fallback = "medium"
+
+    dims: dict[str, dict] = {}
+    for key in DIMS:
+        value = data.get(key, "")
+        if isinstance(value, dict):
+            content = str(value.get("content", "")).strip()
+            confidence = str(value.get("confidence", fallback)).strip().lower()
+        else:
+            content = str(value or "").strip()
+            confidence = fallback
+        if confidence not in CONFIDENCE_LEVELS:
+            confidence = fallback
+        dims[key] = {"content": content, "confidence": confidence}
+
     result = VisionResult(
-        view=str(data.get("view", "")).strip(),
-        size=str(data.get("size", "")).strip(),
-        roughness=str(data.get("roughness", "")).strip(),
-        material=str(data.get("material", "")).strip(),
-        process=str(data.get("process", "")).strip(),
-        confidence=str(data.get("confidence", "medium")).strip(),
+        dims=dims,
         notes=str(data.get("notes", "")).strip(),
+        confidence=fallback,
     )
-    if not result["view"]:
-        result["view"] = "模型未返回结构化结果，请重新上传更清晰的图纸照片。"
+    if not result["dims"]["view"]["content"]:
+        result["dims"]["view"]["content"] = "模型未返回结构化结果，请重新上传更清晰的图纸照片。"
     return result

@@ -1,4 +1,5 @@
 """文本模型调用：DeepSeek（OpenAI 兼容协议），流式输出。"""
+import json
 from collections.abc import AsyncIterator
 
 import httpx
@@ -41,7 +42,7 @@ async def stream_chat(messages: list[dict], temperature: float | None = None) ->
                 if data == "[DONE]":
                     break
                 try:
-                    obj = eval_json(data)
+                    obj = json.loads(data)
                 except ValueError:
                     continue
                 choices = obj.get("choices") or []
@@ -50,9 +51,3 @@ async def stream_chat(messages: list[dict], temperature: float | None = None) ->
                 piece = (choices[0].get("delta") or {}).get("content")
                 if piece:
                     yield piece
-
-
-def eval_json(raw: str) -> dict:
-    import json
-
-    return json.loads(raw)

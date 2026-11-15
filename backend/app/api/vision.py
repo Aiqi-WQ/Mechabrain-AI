@@ -46,13 +46,15 @@ async def recognize(file: UploadFile = File(...)):
             yield error(f"图纸识读失败：{exc}", "vision_error")
             return
 
+        dims = result.get("dims") or {}
         for key, title in DIMS:
+            item = dims.get(key) or {}
             yield pack({
                 "type": "dimension",
                 "key": key,
                 "title": title,
-                "content": result.get(key, ""),
-                "confidence": result.get("confidence", "medium"),
+                "content": item.get("content", ""),
+                "confidence": item.get("confidence", "medium"),
             })
         yield pack({"type": "meta", "notes": result.get("notes", "")})
         yield done()
