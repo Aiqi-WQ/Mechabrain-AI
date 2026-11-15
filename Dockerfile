@@ -17,5 +17,8 @@ RUN pip install --no-cache-dir -r backend/requirements.txt
 COPY backend/ backend/
 COPY --from=web-builder /src/web/dist web/dist
 
+# 构建期把示例教材入库，容器起来 knowledge base 就是可用的（否则教材问答必然是空的）
+RUN cd backend && python scripts/ingest.py
+
 EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--app-dir", "backend", "--host", "0.0.0.0", "--port", "8000"]
